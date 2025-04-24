@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-image: url('bg_img.png');
+  background: linear-gradient(45deg , #bfdbfe, #facc15);
+}
