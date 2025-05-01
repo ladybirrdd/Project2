@@ -10,7 +10,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 VOSK_MODEL_PATH = r"C:\\Users\\dell\\vosk-model-small-en-us-0.15"  # Update with your model path
-# Load tokenizer and model once
 
 def convert_to_wav(input_file_path):
     try:
@@ -68,8 +67,6 @@ def generate_llama_response(english_text):
         logger.error(f"Error in generating LLaMA response: {e}")
         return None
 
-
-
 def translate_text_to_nepali(english_text):
     try:
         prompt = f"Translate the following English text into Nepali: '{english_text}' and return only the Nepali translation without any explanations or notes."
@@ -87,3 +84,19 @@ def translate_text_to_nepali(english_text):
     except Exception as e:
         logger.error(f"Error in text translation: {e}")
         return None
+
+def translate_texts_to_hindi(english_text):
+    try:
+        translated_sentence = f"Translated sentence for: {english_text}"
+
+        if "<start>" in translated_sentence:
+            translated_sentence = translated_sentence.replace("<start>", "")
+        if "<end>" in translated_sentence:
+            translated_sentence = translated_sentence.replace("<end>", "")
+        
+        return translated_sentence.strip()
+
+    except Exception as e:
+        logger.error(f"Error in text translation to Hindi: {e}")
+        return None
+

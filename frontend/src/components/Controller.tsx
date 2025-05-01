@@ -3,9 +3,16 @@ import Title from "./Title";
 import axios from "axios";
 import RecordMessage from "./RecordMessage";
 
+interface Message {
+  sender: "me" | "Translation";
+  text: string;
+  language_text?: string;
+  blobUrl: string | null;
+}
+
 const Controller = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [language, setLanguage] = useState<string>("hindi");
   const [error, setError] = useState<string | null>(null);
 
@@ -14,90 +21,67 @@ const Controller = () => {
     setTimeout(() => setError(null), 4000);
   };
 
-  const createBlobURL = (data: any) => {
-    const blob = new Blob([data], { type: "audio/mpeg" });
-    return window.URL.createObjectURL(blob);
-  };
+  const createBlobURL = (data: Blob) => window.URL.createObjectURL(data);
 
   const handleStop = async (blobUrl: string) => {
     setIsLoading(true);
-    console.log("Processing recorded audio...");
+    setError(null);
 
     try {
       const response = await fetch(blobUrl);
       const blob = await response.blob();
 
       if (blob.size === 0) {
-        console.error("Error: Recorded blob is empty!");
-        showError("Audio decoding failed. Please try recording again.");
-        setIsLoading(false);
+        showError("Empty recording. Please try again.");
         return;
       }
 
       const formData = new FormData();
       formData.append("file", blob, "audio.wav");
 
-      const { data } = await axios.post("http://localhost:8000/post-audio", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        params: { language }
+      const decodeRes = await axios.post("http://localhost:8000/decode-audio", formData);
+      const message_decoded = decodeRes.data.message_decoded;
+
+      setMessages(prev => [...prev, { sender: "me", text: message_decoded, blobUrl }]);
+
+      const responseRes = await axios.post("http://localhost:8000/generate-response", {
+        message: message_decoded,
+        language
       });
 
-      const { message_decoded, english_response, hindi_translation, nepali_translation, audio_id } = data;
+      const { english_response, translation } = responseRes.data;
 
-      if (!message_decoded) {
-        showError("Failed to decode the audio message.");
-        setIsLoading(false);
-        return;
-      }
+      const translationMessage: Message = {
+        sender: "Translation",
+        text: english_response,
+        language_text: translation,
+        blobUrl: null
+      };
 
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { sender: "me", text: message_decoded, blobUrl },
-      ]);
+      setMessages(prev => [...prev, translationMessage]);
 
-      if (
-        !english_response ||
-        (language === "hindi" && !hindi_translation) ||
-        (language === "nepali" && !nepali_translation)
-      ) {
-        showError("Translation failed. Please try again.");
-        setIsLoading(false);
-        return;
-      }
+      const audioRes = await axios.post("http://localhost:8000/generate-audio", { translation });
+      const audio_id = audioRes.data.audio_id;
 
-      const audioResponse = await axios.get(`http://localhost:8000/get-audio/${audio_id}`, {
-        responseType: "blob",
+      const audioFile = await axios.get(`http://localhost:8000/get-audio/${audio_id}`, {
+        responseType: "blob"
       });
 
-      if (!audioResponse?.data) {
-        showError("Failed to generate translated audio.");
-        setIsLoading(false);
-        return;
-      }
-
-      const audioUrl = createBlobURL(audioResponse.data);
+      const audioUrl = createBlobURL(audioFile.data);
       const audioElement = new Audio(audioUrl);
       audioElement.play();
 
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        {
-          sender: "Translation",
-          blobUrl: audioUrl,
-          text: english_response,
-          language_text: language === "hindi" ? hindi_translation : nepali_translation,
-        },
-      ]);
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.text === english_response ? { ...msg, blobUrl: audioUrl } : msg
+        )
+      );
     } catch (err: any) {
-      console.error("Error:", err);
-
-      // Check if the error is from the Axios request
+      console.error(err);
       if (axios.isAxiosError(err)) {
-        const errorMessage =
-          err.response?.data?.detail || "Something went wrong. Please try again.";
-        showError(errorMessage);
+        showError(err.response?.data?.detail || "Something went wrong.");
       } else {
-        showError("Unexpected error occurred.");
+        showError("Unexpected error.");
       }
     } finally {
       setIsLoading(false);
@@ -119,35 +103,29 @@ const Controller = () => {
           {messages.length === 0 && !isLoading && (
             <div className="text-center font-light italic mt-10">Say something...</div>
           )}
-
           {isLoading && (
             <div className="text-center font-light italic mt-10 animate-pulse">Gimme a few seconds...</div>
           )}
-
           {messages.map((audio, index) => (
-            <div key={index + audio.sender} className="flex flex-col w-full mt-4 text-left">
+            <div key={`${audio.sender}-${index}`} className="flex flex-col w-full mt-4 text-left">
               {audio.sender === "me" ? (
                 <div className="flex justify-start w-full">
                   <div className="flex flex-col items-start p-5">
                     <p className="italic text-blue-500">{audio.sender}</p>
-                    <audio src={audio.blobUrl} className="appearance-none" controls />
-                    {audio.text && (
-                      <p className="mt-2 w-60 h-8 text-sm text-gray-700 font-semibold text-center flex items-center justify-center bg-[#ddddddcc] p-2 rounded-tl-lg rounded-br-lg mx-auto">
-                        {audio.text}
-                      </p>
-                    )}
+                    {audio.blobUrl && <audio src={audio.blobUrl} controls />}
+                    <p className="mt-2 max-w-[240px] text-sm text-gray-700 font-semibold text-center break-words bg-[#ddddddcc] p-2 rounded-tl-lg rounded-br-lg mx-auto">
+                      {audio.text}
+                    </p>
                   </div>
                 </div>
               ) : (
                 <div className="flex justify-center items-center w-full">
                   <div className="flex flex-col items-start">
                     <p className="italic text-blue-500">{audio.sender}</p>
-                    <audio src={audio.blobUrl} className="appearance-none" controls />
-                    {audio.language_text && (
-                      <p className="mt-2 w-60 h-8 text-sm text-gray-700 font-semibold text-center flex items-center justify-center bg-[#ddddddcc] p-2 rounded-tl-lg rounded-br-lg mx-auto">
-                        {audio.language_text}
-                      </p>
-                    )}
+                    {audio.blobUrl && <audio src={audio.blobUrl} controls />}
+                    <p className="mt-2 max-w-[240px] text-sm text-gray-700 font-semibold text-center break-words bg-[#ddddddcc] p-2 rounded-tl-lg rounded-br-lg mx-auto">
+                      {audio.language_text || audio.text}
+                    </p>
                   </div>
                 </div>
               )}
@@ -159,7 +137,7 @@ const Controller = () => {
           <p className="font-bold text-lg mb-4">CHAT RESPONSE</p>
           {messages.map((msg, index) =>
             msg.text ? (
-              <div key={index} className="flex items-start bg-white text-black p-3 mt-2 rounded-lg max-w-[80%]">
+              <div key={`${msg.sender}-${index}`} className="flex items-start bg-white text-black p-3 mt-2 rounded-lg max-w-[80%]">
                 <img src={msg.sender === "me" ? "/user.png" : "/chatbot.png"} alt="Icon" className="w-8 h-8 rounded-full mr-3" />
                 <div>
                   <p className="font-semibold">{msg.sender === "me" ? "User:" : "Chatbot:"}</p>
@@ -181,3 +159,4 @@ const Controller = () => {
 };
 
 export default Controller;
+
