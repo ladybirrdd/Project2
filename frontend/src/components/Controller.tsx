@@ -26,58 +26,70 @@ const Controller = () => {
   const handleStop = async (blobUrl: string) => {
     setIsLoading(true);
     setError(null);
-
+  
     try {
       const response = await fetch(blobUrl);
       const blob = await response.blob();
-
+  
       if (blob.size === 0) {
         showError("Empty recording. Please try again.");
         return;
       }
-
+  
       const formData = new FormData();
       formData.append("file", blob, "audio.wav");
-
+  
       const decodeRes = await axios.post("http://localhost:8000/decode-audio", formData);
       const message_decoded = decodeRes.data.message_decoded;
-
+  
       setMessages(prev => [...prev, { sender: "me", text: message_decoded, blobUrl }]);
-
+  
       const responseRes = await axios.post("http://localhost:8000/generate-response", {
         message: message_decoded,
         language
       });
-
+  
       const { english_response, translation } = responseRes.data;
-
+  
       const translationMessage: Message = {
         sender: "Translation",
         text: english_response,
         language_text: translation,
         blobUrl: null
       };
-
+  
       setMessages(prev => [...prev, translationMessage]);
-
+  
       const audioRes = await axios.post("http://localhost:8000/generate-audio", { translation });
       const audio_id = audioRes.data.audio_id;
-
+  
       const audioFile = await axios.get(`http://localhost:8000/get-audio/${audio_id}`, {
         responseType: "blob"
       });
-
+  
       const audioUrl = createBlobURL(audioFile.data);
       const audioElement = new Audio(audioUrl);
       audioElement.play();
-
+  
       setMessages(prev =>
         prev.map(msg =>
           msg.text === english_response ? { ...msg, blobUrl: audioUrl } : msg
         )
       );
+  
     } catch (err: any) {
       console.error(err);
+  
+      // ⚠️ Only show errors for translation/response/audio generation
+      if (
+        axios.isAxiosError(err) &&
+        err.config?.url?.includes("/decode-audio")
+      ) {
+        // Only log decode-audio error to console
+        console.warn("Decode error occurred, but not shown to user.");
+        return;
+      }
+  
       if (axios.isAxiosError(err)) {
         showError(err.response?.data?.detail || "Something went wrong.");
       } else {
@@ -86,7 +98,7 @@ const Controller = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  };  
 
   return (
     <div className="h-screen overflow-y-hidden">

@@ -818,5 +818,53 @@
     {
         "role": "assistant_hindi",
         "content": "डर आप कर रहे ह"
+    },
+    {
+        "role": "user",
+        "content": "hello how are you"
+    },
+    {
+        "role": "assistant_english",
+        "content": "Hello! I'm just an AI, so I don't have feelings or emotions like humans do. But I'm functioning properly and ready to help with any questions or tasks you may have! How can I assist you today?"
+    },
+    {
+        "role": "assistant_hindi",
+        "content": "हैलो तुम कैसे हो"
+    },
+    {
+        "role": "user",
+        "content": "i'm be happy to be here thank you"
+    },
+    {
+        "role": "assistant_english",
+        "content": "You're welcome! I'm glad you're feeling happy and enthusiastic about being here. That's a great attitude to have, and it makes our conversation even more enjoyable!\n\nSo, what brings you joy and happiness? Is there something specific that you're looking forward to or excited about? I'm all ears and ready to listen!"
+    },
+    {
+        "role": "assistant_hindi",
+        "content": "म सिधे हुन्छ भumi हुन्छ धन्यवाद"
+    },
+    {
+        "role": "user",
+        "content": "hello hello hello hello"
+    },
+    {
+        "role": "assistant_english",
+        "content": "HELLOOOO! It seems like you're in a very enthusiastic mood today! I'm happy to chat with you and see what's on your mind. What's new and exciting in your world?"
+    },
+    {
+        "role": "assistant_hindi",
+        "content": "नमस्ता नमस्ता नमस्ता नमस्ता"
+    },
+    {
+        "role": "user",
+        "content": "i'm going home"
+    },
+    {
+        "role": "assistant_english",
+        "content": "It sounds like you're planning a trip back to your home. That's great! Do you have any fun plans or things you want to do when you get there, or is it more of a relaxing getaway?"
+    },
+    {
+        "role": "assistant_hindi",
+        "content": "सफर मझ घार जा रहा ह"
     }
 ]
