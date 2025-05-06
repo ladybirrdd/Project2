@@ -9,8 +9,7 @@ import tempfile
 import time
 
 from functions.text_to_speech import convert_text_to_speech
-from functions.requests import convert_audio_to_text, translate_text_to_nepali, generate_llama_response, translate_texts_to_hindi
-from functions.translation import translate_text_to_hindi
+from functions.requests import convert_audio_to_text, translate_text_to_nepali, generate_llama_response, translate_text_to_hindi
 from functions.database import store_messages, reset_messages
 
 logging.basicConfig(level=logging.INFO)

@@ -36,7 +36,7 @@ function Title({ setMessages, setLanguage }: Props) {
 
   const handleLanguageChange = (language: string) => {
     setLanguage(language);
-    setSelectedLanguage(language); // Update selected language
+    setSelectedLanguage(language); 
   };
 
   return (

@@ -5,11 +5,18 @@ import ollama
 import os
 import subprocess
 import uuid
+from transformers import MarianMTModel, MarianTokenizer
+import torch
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-VOSK_MODEL_PATH = r"C:\\Users\\dell\\vosk-model-small-en-us-0.15"  # Update with your model path
+VOSK_MODEL_PATH = r"C:\\Users\\dell\\vosk-model-small-en-us-0.15"  
+model_name = 'Helsinki-NLP/opus-mt-en-hi'
+tokenizer = MarianTokenizer.from_pretrained(model_name)
+model = MarianMTModel.from_pretrained(model_name)
+
 
 def convert_to_wav(input_file_path):
     try:
@@ -85,18 +92,14 @@ def translate_text_to_nepali(english_text):
         logger.error(f"Error in text translation: {e}")
         return None
 
-def translate_texts_to_hindi(english_text):
+def translate_text_to_hindi(english_text):
     try:
-        translated_sentence = f"Translated sentence for: {english_text}"
-
-        if "<start>" in translated_sentence:
-            translated_sentence = translated_sentence.replace("<start>", "")
-        if "<end>" in translated_sentence:
-            translated_sentence = translated_sentence.replace("<end>", "")
-        
-        return translated_sentence.strip()
-
+        inputs = tokenizer(english_text, return_tensors="pt", padding=True, truncation=True)
+        translated_tokens = model.generate(**inputs)
+        translation = tokenizer.batch_decode(translated_tokens, skip_special_tokens=True)[0]
+        return translation.strip()
     except Exception as e:
         logger.error(f"Error in text translation to Hindi: {e}")
         return None
+
 

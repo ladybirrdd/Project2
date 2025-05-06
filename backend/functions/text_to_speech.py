@@ -5,7 +5,7 @@ import time
 
 ELEVEN_LABS_API_KEY = config("ELEVEN_LABS_API_KEY")
 
-DEFAULT_VOICE_ID = "bIHbv24MWmeRgasZH58o"  # Will
+DEFAULT_VOICE_ID = "bIHbv24MWmeRgasZH58o" 
 
 def convert_text_to_speech(message, voice_id=DEFAULT_VOICE_ID):
 
