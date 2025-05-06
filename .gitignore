@@ -1,7 +1,5 @@
-# Ignore virtual environment
 backend/venv/
 
-# Ignore environment variables
 backend/.env
 
 *.pyc
